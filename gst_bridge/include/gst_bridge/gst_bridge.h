@@ -29,6 +29,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/image_encodings.hpp>
 #include <audio_msgs/msg/audio.hpp>
+#include <h265_image_transport/msg/h265_packet.hpp>
 
 #define GST_BRIDGE_GST_VIDEO_FORMAT_LIST "{ GRAY8, GRAY16_LE, RGB, BGR, RGBA, BGRA, UYVY, YUY2 }"
 #define GST_BRIDGE_GST_AUDIO_FORMAT_LIST "{ S8, U8, S16LE, U16LE, S32LE, U32LE, F32LE, F64LE }"    // only well behaved formats
@@ -62,6 +63,16 @@
 //support rpicamsrc compressed feeds over DDS?
 #define H264_CAPS                                     \
   "video/x-h264, "                                    \
+  "width = " GST_VIDEO_SIZE_RANGE ", "                \
+  "height = " GST_VIDEO_SIZE_RANGE ", "               \
+  "framerate = " GST_VIDEO_FPS_RANGE ", "             \
+  "stream-format = (string) byte-stream, "            \
+  "alignment = (string) nal, "                        \
+  "profile = (string) { constrained-baseline, baseline, main, high }"
+
+//support rpicamsrc compressed feeds over DDS?
+#define H265_CAPS                                     \
+  "video/x-h265, "                                    \
   "width = " GST_VIDEO_SIZE_RANGE ", "                \
   "height = " GST_VIDEO_SIZE_RANGE ", "               \
   "framerate = " GST_VIDEO_FPS_RANGE ", "             \

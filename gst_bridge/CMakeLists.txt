@@ -19,7 +19,8 @@ endif()
 
 # Emulate colcon in CLion
 if($ENV{CLION_IDE})
-  set(audio_msgs_DIR "${PROJECT_SOURCE_DIR}/../../../install/audio_msgs/share/audio_msgs/cmake")
+set(audio_msgs_DIR "${PROJECT_SOURCE_DIR}/../../../install/audio_msgs/share/audio_msgs/cmake")
+set(h265_image_transport_DIR "${PROJECT_SOURCE_DIR}/../../../install/h265_image_transport/share/h265_image_transport/cmake")
 endif()
 
 
@@ -42,6 +43,7 @@ find_package(GLIB 2.28 REQUIRED COMPONENTS ${glib_components})
 find_package(std_msgs REQUIRED)
 find_package(audio_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(h265_image_transport REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 # find_package(rosidl_default_generators REQUIRED)
 
@@ -69,6 +71,7 @@ add_library(rosgstbridge SHARED
   src/rosbasesink.cpp
   src/rosbasesrc.cpp
   src/rosaudiosink.cpp
+  src/rosh265sink.cpp
   src/rosimagesink.cpp
   src/rostextsink.cpp
   src/rosaudiosrc.cpp
@@ -86,6 +89,7 @@ target_include_directories(rosgstbridge PRIVATE
   ${rclcpp_INCLUDE_DIRS}
   ${sensor_msgs_INCLUDE_DIRS}
   ${audio_msgs_INCLUDE_DIRS}
+  ${h265_image_transport_INCLUDE_DIRS}
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
   ${GLIB_INCLUDE_DIRS}
@@ -99,6 +103,7 @@ target_link_libraries(rosgstbridge PUBLIC
   ${rclcpp_LIBRARIES}
   ${sensor_msgs_LIBRARIES}
   ${audio_msgs_LIBRARIES}
+  ${h265_image_transport_LIBRARIES}
   ${GLIB_LIBRARIES}
   ${GLIB_GIO_LIBRARIES}
   ${GLIB_GOBJECT_LIBRARIES}
@@ -119,6 +124,7 @@ target_include_directories(gst_bridge PUBLIC
   ${rclcpp_INCLUDE_DIRS}
   ${sensor_msgs_INCLUDE_DIRS}
   ${audio_msgs_INCLUDE_DIRS}
+  ${h265_image_transport_INCLUDE_DIRS}
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
   ${GLIB_INCLUDE_DIRS}
@@ -131,6 +137,7 @@ target_link_libraries(gst_bridge PUBLIC
   ${rclcpp_LIBRARIES}
   ${sensor_msgs_LIBRARIES}
   ${audio_msgs_LIBRARIES}
+  ${h265_image_transport_LIBRARIES}
   ${GLIB_LIBRARIES}
   ${GLIB_GIO_LIBRARIES}
   ${GSTREAMER_LIBRARIES}
