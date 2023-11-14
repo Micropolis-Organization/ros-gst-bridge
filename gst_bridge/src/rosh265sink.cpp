@@ -252,8 +252,6 @@ static gboolean rosh265sink_setcaps (GstBaseSink * gst_base_sink, GstCaps * caps
 
   format_str = gst_structure_get_string(caps_struct, "format");
 
-  printf("AAAAAAAAAAAAAAA %s\n",format_str);
-
   // if(format_str)
   // {
   //   format_enum = gst_video_format_from_string (format_str);
