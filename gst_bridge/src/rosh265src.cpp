@@ -55,13 +55,13 @@ static GstCaps* rosh265src_getcaps (GstBaseSrc * base_src, GstCaps * filter);  /
 // static GstCaps * rosh265src_fixate (GstBaseSrc * base_src, GstCaps * caps);
 
 
-static void rosh265src_sub_cb(Rosh265src * src, sensor_msgs::msg::Image::ConstSharedPtr msg);
-static sensor_msgs::msg::Image::ConstSharedPtr rosh265src_wait_for_msg(Rosh265src * src);
+static void rosh265src_sub_cb(Rosh265src * src, h265_image_transport::msg::H265Packet::ConstSharedPtr msg);
+static h265_image_transport::msg::H265Packet::ConstSharedPtr rosh265src_wait_for_msg(Rosh265src * src);
 
 
 static void rosh265src_set_msg_props_from_caps_string(Rosh265src * src, gchar * caps_string);
-static void rosh265src_set_msg_props_from_msg(Rosh265src * src, sensor_msgs::msg::Image::ConstSharedPtr msg);
-static void rosh265src_set_msg_props(Rosh265src * src, int width, int height, size_t step, gint endianness, gchar* encoding);
+static void rosh265src_set_msg_props_from_msg(Rosh265src * src, h265_image_transport::msg::H265Packet::ConstSharedPtr msg);
+static void rosh265src_set_msg_props(Rosh265src * src);
 
 
 enum
@@ -150,7 +150,7 @@ static void rosh265src_init (Rosh265src * src)
   src->msg_init = true;
   src->msg_queue_max = 1;
   // XXX why does queue segfault without expicit construction?
-  src->msg_queue = std::queue<sensor_msgs::msg::Image::ConstSharedPtr>();
+  src->msg_queue = std::queue<h265_image_transport::msg::H265Packet::ConstSharedPtr>();
 
   /* configure basesrc to be a live source */
   gst_base_src_set_live (GST_BASE_SRC (src), TRUE);
@@ -221,6 +221,62 @@ void rosh265src_get_property (GObject * object, guint property_id,
   }
 }
 
+static void rosh265src_set_msg_props_from_caps_string(Rosh265src * src, gchar * caps_string)
+{
+  int width;
+  int height;
+  size_t step;
+  gint endianness;
+  gchar* encoding;
+
+  GstCaps * caps = gst_caps_from_string(caps_string);
+  GstStructure * caps_struct = gst_caps_get_structure (caps, 0);
+
+  if(!gst_structure_get_int (caps_struct, "width", &width))
+    GST_DEBUG_OBJECT (src, "caps_init missing width");
+
+  if(!gst_structure_get_int (caps_struct, "height", &height))
+    GST_DEBUG_OBJECT (src, "caps_init missing height");
+
+  const gchar * format_str = gst_structure_get_string(caps_struct, "format");
+  if(!format_str)
+    GST_DEBUG_OBJECT (src, "caps_init missing format");
+
+  GstVideoFormat format = gst_video_format_from_string (format_str);
+
+  step = gst_video_format_get_info(format)->pixel_stride[0];
+  endianness = G_LITTLE_ENDIAN;  // XXX pull this from somewhere
+
+  // XXX this check is redundant right now, we should allow overrides by making ros-encoding READWRITE
+  if(0 == g_strcmp0(src->encoding, ""))
+  {
+    encoding = g_strdup(gst_bridge::getRosEncoding(format).c_str());
+  }
+  else
+  {
+    encoding = NULL;
+  }
+  rosh265src_set_msg_props(src);
+
+
+}
+static void rosh265src_set_msg_props_from_msg(Rosh265src * src, h265_image_transport::msg::H265Packet::ConstSharedPtr msg)
+{
+
+  rosh265src_set_msg_props(src);
+}
+
+static void rosh265src_set_msg_props(Rosh265src * src)
+{
+
+
+  // size_t blocksize = src->step * src->width * src->height;
+  // gst_base_src_set_blocksize(GST_BASE_SRC (src), blocksize);
+
+  src->msg_init = false;
+}
+
+
 /* open the subscription with given specs */
 static gboolean rosh265src_open (RosBaseSrc * ros_base_src)
 {
@@ -232,9 +288,9 @@ static gboolean rosh265src_open (RosBaseSrc * ros_base_src)
 
   // ROS can't cope with some forms of std::bind being passed as subscriber callbacks,
   // lambdas seem to be the preferred case for these instances
-  auto cb = [src] (sensor_msgs::msg::Image::ConstSharedPtr msg){rosh265src_sub_cb(src, msg);};
+  auto cb = [src] (h265_image_transport::msg::H265Packet::ConstSharedPtr msg){rosh265src_sub_cb(src, msg);};
   rclcpp::QoS qos = rclcpp::SensorDataQoS();  //XXX add a parameter for overrides
-  src->sub = ros_base_src->node->create_subscription<sensor_msgs::msg::Image>(src->sub_topic, qos, cb);
+  src->sub = ros_base_src->node->create_subscription<h265_image_transport::msg::H265Packet>(src->sub_topic, qos, cb);
 
   return TRUE;
 }
@@ -265,7 +321,7 @@ static GstCaps* rosh265src_getcaps (GstBaseSrc * base_src, GstCaps * filter)
 
   const gchar * format_str;
   GstVideoFormat format_enum;
-  static sensor_msgs::msg::Image::ConstSharedPtr msg;
+  static h265_image_transport::msg::H265Packet::ConstSharedPtr msg;
   GstCaps * caps;
 
   Rosh265src *src = GST_ROSH265SRC (base_src);
@@ -359,11 +415,11 @@ static GstFlowReturn rosh265src_create (GstBaseSrc * base_src, guint64 offset, g
 
   if(!ros_base_src->node)
   {
-    GST_DEBUG_OBJECT (src, "ros image creating buffer before node init");
+    GST_DEBUG_OBJECT (src, "ros h265 creating buffer before node init");
   }
   else if(src->msg_init)
   {
-    GST_DEBUG_OBJECT (src, "ros image creating buffer before receiving first message");
+    GST_DEBUG_OBJECT (src, "ros h265 creating buffer before receiving first message");
   }
 
   auto msg = rosh265src_wait_for_msg(src);
@@ -405,7 +461,7 @@ static GstFlowReturn rosh265src_create (GstBaseSrc * base_src, guint64 offset, g
   return ret;
 }
 
-static void rosh265src_sub_cb(Rosh265src * src, sensor_msgs::msg::Image::ConstSharedPtr msg)
+static void rosh265src_sub_cb(Rosh265src * src, h265_image_transport::msg::H265Packet::ConstSharedPtr msg)
 {
   RosBaseSrc *ros_base_src = GST_ROS_BASE_SRC (src);
   //GST_DEBUG_OBJECT (src, "ros cb called");
@@ -415,20 +471,6 @@ static void rosh265src_sub_cb(Rosh265src * src, sensor_msgs::msg::Image::ConstSh
   if(src->msg_init)
   {
     rosh265src_set_msg_props_from_msg(src, msg);
-  }
-  else
-  {
-    if(!(src->step == msg->step / msg->width))
-      RCLCPP_ERROR(ros_base_src->logger, "image format changed during playback, step %d != %d", src->step, msg->step/msg->width);
-    if(!(src->height == (int) msg->height))
-      RCLCPP_ERROR(ros_base_src->logger, "image format changed during playback, height %d != %d", src->height, msg->height);
-    if(!(src->width == (int) msg->width))
-      RCLCPP_ERROR(ros_base_src->logger, "image format changed during playback, width %d != %d", src->width, msg->width);
-    if(!(src->endianness == (msg->is_bigendian ? G_BIG_ENDIAN : G_LITTLE_ENDIAN)))
-      RCLCPP_ERROR(ros_base_src->logger, "image format changed during playback, endianness %d != %d", src->endianness, (msg->is_bigendian ? G_BIG_ENDIAN : G_LITTLE_ENDIAN));
-    if(!(0 == g_strcmp0(src->encoding, msg->encoding.c_str())))
-      RCLCPP_ERROR(ros_base_src->logger, "image format changed during playback, encoding %s != %s", src->encoding, msg->encoding.c_str());
-
   }
 
   std::unique_lock<std::mutex> lck(src->msg_queue_mtx);
@@ -442,7 +484,7 @@ static void rosh265src_sub_cb(Rosh265src * src, sensor_msgs::msg::Image::ConstSh
 }
 
 
-static sensor_msgs::msg::Image::ConstSharedPtr rosh265src_wait_for_msg(Rosh265src * src)
+static h265_image_transport::msg::H265Packet::ConstSharedPtr rosh265src_wait_for_msg(Rosh265src * src)
 {
   //RosBaseSrc *ros_base_src = GST_ROS_BASE_SRC (src);
 
