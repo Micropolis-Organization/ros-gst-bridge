@@ -72,6 +72,7 @@ add_library(rosgstbridge SHARED
   src/rosbasesrc.cpp
   src/rosaudiosink.cpp
   src/rosh265sink.cpp
+  src/rosh265src.cpp
   src/rosimagesink.cpp
   src/rostextsink.cpp
   src/rosaudiosrc.cpp

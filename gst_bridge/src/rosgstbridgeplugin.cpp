@@ -24,6 +24,7 @@
 #include <gst_bridge/rosaudiosink.h>
 #include <gst_bridge/rosimagesink.h>
 #include <gst_bridge/rosh265sink.h>
+#include <gst_bridge/rosh265src.h>
 #include <gst_bridge/rostextsink.h>
 #include <gst_bridge/rosaudiosrc.h>
 #include <gst_bridge/rosimagesrc.h>
@@ -45,6 +46,9 @@ plugin_init (GstPlugin * plugin)
 
   gst_element_register (plugin, "rosh265sink", GST_RANK_NONE,
       GST_TYPE_ROSH265SINK);
+
+  gst_element_register (plugin, "rosh265src", GST_RANK_NONE,
+      GST_TYPE_ROSH265SRC);
 
   gst_element_register (plugin, "rostextsink", GST_RANK_NONE,
       GST_TYPE_ROSTEXTSINK);

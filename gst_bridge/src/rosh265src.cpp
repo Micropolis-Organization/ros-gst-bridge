@@ -113,7 +113,7 @@ static void rosh265src_class_init (Rosh265srcClass * klass)
 
   g_object_class_install_property (object_class, PROP_ROS_TOPIC,
       g_param_spec_string ("ros-topic", "sub-topic", "ROS topic to subscribe to",
-      "gst_h265_sub",
+      "gst_h265",
       (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS))
   );
 
@@ -123,6 +123,12 @@ static void rosh265src_class_init (Rosh265srcClass * klass)
       (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS))
   );
 
+
+  g_object_class_install_property (object_class, PROP_INIT_CAPS,
+      g_param_spec_string ("init-caps", "initial-caps", "optional caps filter to skip wait for first message",
+      "",
+      (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS))
+  );
 
 
   ros_base_src_class->open = GST_DEBUG_FUNCPTR (rosh265src_open);  //let the base sink know how we register publishers
@@ -142,7 +148,7 @@ static void rosh265src_init (Rosh265src * src)
 {
   RosBaseSrc *ros_base_src GST_ROS_BASE_SRC(src);
   ros_base_src->node_name = g_strdup("gst_h265_src_node");
-  src->sub_topic = g_strdup("gst_h265_sub");
+  src->sub_topic = g_strdup("gst_h265");
   src->frame_id = g_strdup("");
   // src->encoding = g_strdup("");
   src->init_caps = g_strdup("");
@@ -184,6 +190,18 @@ void rosh265src_set_property (GObject * object, guint property_id,
       }
       break;
 
+    case PROP_INIT_CAPS:
+      if(src->msg_init)
+      {
+        g_free(src->init_caps);
+        src->init_caps = g_value_dup_string(value);
+        rosh265src_set_msg_props_from_caps_string(src, src->init_caps);
+      }
+      else
+      {
+        RCLCPP_ERROR(ros_base_src->logger, "can't change initial caps after init");
+      }
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -223,42 +241,7 @@ void rosh265src_get_property (GObject * object, guint property_id,
 
 static void rosh265src_set_msg_props_from_caps_string(Rosh265src * src, gchar * caps_string)
 {
-  int width;
-  int height;
-  size_t step;
-  gint endianness;
-  gchar* encoding;
-
-  GstCaps * caps = gst_caps_from_string(caps_string);
-  GstStructure * caps_struct = gst_caps_get_structure (caps, 0);
-
-  if(!gst_structure_get_int (caps_struct, "width", &width))
-    GST_DEBUG_OBJECT (src, "caps_init missing width");
-
-  if(!gst_structure_get_int (caps_struct, "height", &height))
-    GST_DEBUG_OBJECT (src, "caps_init missing height");
-
-  const gchar * format_str = gst_structure_get_string(caps_struct, "format");
-  if(!format_str)
-    GST_DEBUG_OBJECT (src, "caps_init missing format");
-
-  GstVideoFormat format = gst_video_format_from_string (format_str);
-
-  step = gst_video_format_get_info(format)->pixel_stride[0];
-  endianness = G_LITTLE_ENDIAN;  // XXX pull this from somewhere
-
-  // XXX this check is redundant right now, we should allow overrides by making ros-encoding READWRITE
-  if(0 == g_strcmp0(src->encoding, ""))
-  {
-    encoding = g_strdup(gst_bridge::getRosEncoding(format).c_str());
-  }
-  else
-  {
-    encoding = NULL;
-  }
   rosh265src_set_msg_props(src);
-
-
 }
 static void rosh265src_set_msg_props_from_msg(Rosh265src * src, h265_image_transport::msg::H265Packet::ConstSharedPtr msg)
 {
@@ -341,12 +324,6 @@ static GstCaps* rosh265src_getcaps (GstBaseSrc * base_src, GstCaps * filter)
       return gst_pad_get_pad_template_caps (GST_BASE_SRC (src)->srcpad);
     }
     GST_DEBUG_OBJECT (src, "getcaps with node ready, waiting for message");
-    RCLCPP_INFO(ros_base_src->logger, "waiting for first message");
-    msg = rosh265src_wait_for_msg(src);  // XXX need to fix API, the action happens in a side-effect
-
-    format_enum = gst_bridge::getGstVideoFormat(std::string(src->encoding));
-    format_str = gst_video_format_to_string(format_enum);
-
     caps = gst_caps_new_simple ("video/x-h265",
         "parsed", G_TYPE_BOOLEAN, TRUE,
         "stream-format", G_TYPE_STRING, "byte-stream",

@@ -101,7 +101,7 @@ static void rosh265sink_class_init (Rosh265sinkClass * klass)
 
   g_object_class_install_property (object_class, PROP_ROS_TOPIC,
       g_param_spec_string ("ros-topic", "pub-topic", "ROS topic to be published on",
-      "gst_h265_pub",
+      "gst_h265",
       (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS))
   );
 
@@ -130,7 +130,7 @@ static void rosh265sink_init (Rosh265sink * sink)
 {
   RosBaseSink *ros_base_sink GST_ROS_BASE_SINK(sink);
   ros_base_sink->node_name = g_strdup("gst_h265_sink_node");
-  sink->pub_topic = g_strdup("gst_h265_pub");
+  sink->pub_topic = g_strdup("gst_h265");
   sink->frame_id = g_strdup("h265_frame");
   // sink->encoding = g_strdup("");
   sink->init_caps =  g_strdup("");
