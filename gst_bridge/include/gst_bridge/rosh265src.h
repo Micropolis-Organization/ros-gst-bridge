@@ -56,17 +56,15 @@ struct _Rosh265src
 
   // XXX this is too much boilerplate.
   size_t msg_queue_max;
-  std::queue<sensor_msgs::msg::Image::ConstSharedPtr> msg_queue;
+  std::queue<h265_image_transport::msg::H265Packet::ConstSharedPtr> msg_queue;
   std::mutex msg_queue_mtx;
   std::condition_variable msg_queue_cv;
 
-  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr sub;
+  rclcpp::Subscription<h265_image_transport::msg::H265Packet>::SharedPtr sub;
 
-  int height;
-  int width;
+  // int height;
+  // int width;
   GstVideoFormat format;
-  size_t step;   //bytes per pixel
-  gint endianness;
 };
 
 struct _Rosh265srcClass
