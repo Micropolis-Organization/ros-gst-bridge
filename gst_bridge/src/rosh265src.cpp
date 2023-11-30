@@ -154,7 +154,7 @@ static void rosh265src_init (Rosh265src * src)
   src->init_caps = g_strdup("");
 
   src->msg_init = true;
-  src->msg_queue_max = 1;
+  src->msg_queue_max = 10;
   // XXX why does queue segfault without expicit construction?
   src->msg_queue = std::queue<h265_image_transport::msg::H265Packet::ConstSharedPtr>();
 
