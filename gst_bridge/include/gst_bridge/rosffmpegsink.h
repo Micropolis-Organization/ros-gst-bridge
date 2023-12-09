@@ -46,7 +46,7 @@ struct _Rosffmpegsink
 
   gchar* pub_topic;
   gchar* frame_id;
-  // gchar* encoding; //ffmpeg topic encoding string
+  gchar* encoding; //ffmpeg topic encoding string
   gchar* init_caps; //optional caps override (used for limited apis)
 
   rclcpp::Publisher<ffmpeg_image_transport_msgs::msg::FFMPEGPacket>::SharedPtr pub;
