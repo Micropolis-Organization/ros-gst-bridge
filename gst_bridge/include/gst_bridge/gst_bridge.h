@@ -80,6 +80,15 @@
   "alignment = (string) { nal, au }, "                        \
   "profile = (string) { constrained-baseline, baseline, main, high }"
 
+#define FFMPEG_CAPS                                     \
+  "video/x-h265; video/x-h264, "                                    \
+  "width = " GST_VIDEO_SIZE_RANGE ", "                \
+  "height = " GST_VIDEO_SIZE_RANGE ", "               \
+  "framerate = " GST_VIDEO_FPS_RANGE ", "             \
+  "stream-format = (string) byte-stream, "            \
+  "alignment = (string) { nal, au }, "                        \
+  "profile = (string) { constrained-baseline, baseline, main, high }"
+
 // XXX support source from "text/plain" for pocketsphinx
 // XXX support sink to "text/x-raw,{ (string)pango-markup, (string)utf8 }" for textoverlay
 // XXX support src and sink "ANY" like filesink and filesrc, (emit a stamped byte string, with a gst caps string as meta)

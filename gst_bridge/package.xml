@@ -17,11 +17,13 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>audio_msgs</build_depend>
   <build_depend>h265_image_transport</build_depend>
+  <build_depend>ffmpeg_image_transport_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
 
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>audio_msgs</exec_depend>
   <exec_depend>h265_image_transport</exec_depend>
+  <exec_depend>ffmpeg_image_transport_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>gstreamer1.0</exec_depend>
   <exec_depend>gstreamer1.0-plugins-base</exec_depend>
