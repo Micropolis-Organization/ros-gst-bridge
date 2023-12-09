@@ -67,7 +67,7 @@
   "height = " GST_VIDEO_SIZE_RANGE ", "               \
   "framerate = " GST_VIDEO_FPS_RANGE ", "             \
   "stream-format = (string) byte-stream, "            \
-  "alignment = (string) nal, "                        \
+  "alignment = (string) { nal, au }, "                        \
   "profile = (string) { constrained-baseline, baseline, main, high }"
 
 //support rpicamsrc compressed feeds over DDS?
@@ -77,7 +77,7 @@
   "height = " GST_VIDEO_SIZE_RANGE ", "               \
   "framerate = " GST_VIDEO_FPS_RANGE ", "             \
   "stream-format = (string) byte-stream, "            \
-  "alignment = (string) nal, "                        \
+  "alignment = (string) { nal, au }, "                        \
   "profile = (string) { constrained-baseline, baseline, main, high }"
 
 // XXX support source from "text/plain" for pocketsphinx
