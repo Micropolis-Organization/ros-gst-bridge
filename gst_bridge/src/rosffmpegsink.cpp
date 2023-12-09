@@ -111,11 +111,11 @@ static void rosffmpegsink_class_init (RosffmpegsinkClass * klass)
       (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS))
   );
 
-  // g_object_class_install_property (object_class, PROP_ROS_ENCODING,
-  //     g_param_spec_string ("ros-encoding", "encoding-string", "A hack to flexibly set the encoding string",
-  //     "",
-  //     (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS))
-  // );
+  g_object_class_install_property (object_class, PROP_ROS_ENCODING,
+      g_param_spec_string ("ros-encoding", "encoding-string", "A hack to flexibly set the encoding string",
+      "",
+      (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS))
+  );
 
   //access gstreamer base sink events here
   basesink_class->set_caps = GST_DEBUG_FUNCPTR (rosffmpegsink_setcaps);  //gstreamer informs us what caps we're using.
@@ -132,7 +132,7 @@ static void rosffmpegsink_init (Rosffmpegsink * sink)
   ros_base_sink->node_name = g_strdup("gst_ffmpeg_sink_node");
   sink->pub_topic = g_strdup("gst_ffmpeg");
   sink->frame_id = g_strdup("ffmpeg_frame");
-  // sink->encoding = g_strdup("");
+  sink->encoding = g_strdup("");
   sink->init_caps =  g_strdup("");
 }
 
@@ -162,10 +162,10 @@ void rosffmpegsink_set_property (GObject * object, guint property_id,
       sink->frame_id = g_value_dup_string(value);
       break;
 
-    // case PROP_ROS_ENCODING:
-    //   g_free(sink->encoding);
-    //   sink->encoding = g_value_dup_string(value);
-    //   break;
+    case PROP_ROS_ENCODING:
+      g_free(sink->encoding);
+      sink->encoding = g_value_dup_string(value);
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -188,9 +188,9 @@ void rosffmpegsink_get_property (GObject * object, guint property_id,
       g_value_set_string(value, sink->frame_id);
       break;
 
-    // case PROP_ROS_ENCODING:
-    //   g_value_set_string(value, sink->encoding);
-    //   break;
+    case PROP_ROS_ENCODING:
+      g_value_set_string(value, sink->encoding);
+      break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -326,12 +326,13 @@ static GstFlowReturn rosffmpegsink_render (RosBaseSink * ros_base_sink, GstBuffe
   //msg.get().width =
 
   //fill the blanks
-  // msg.width = sink->width;
-  // msg.height = sink->height;
-  // msg.encoding = sink->encoding;
+  msg.width = sink->width;
+  msg.height = sink->height;
+  msg.encoding = sink->encoding;
   // msg.is_bigendian = (sink->endianness == G_BIG_ENDIAN);
   // msg.step = sink->step;
 
+  msg.flags = 1;
   gst_buffer_map (buf, &info, GST_MAP_READ);
   // msg.data.assign(info.data, info.data+info.size);
   msg.data.assign(info.data, info.data+info.size);
